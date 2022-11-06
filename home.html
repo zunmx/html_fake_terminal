@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z-Terminal</title>
+</head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-family: Consolas;
+        background-color: #1e1e1e;
+        font-size: 15px;
+        user-select: none;
+    }
+
+    .border {
+        position: absolute;
+        left: 5%;
+        top: 10%;
+        right: 5%;
+        margin: 0;
+        bottom: 25%;
+        padding: 10px 10px 10px 10px;
+        border: 10px solid #323438;
+        border-radius: 15px;
+        background-color: #051f14
+    }
+
+    .border-show {
+        position: relative;
+
+        width: calc(100% - 60px);
+        padding: 0px 10px 10px 10px;
+        border-radius: 15px;
+    }
+
+    .border-show-insert {
+        position: relative;
+        top: -20px;
+        width: calc(100% - 60px);
+        position: relative;
+        padding: 10px 10px 10px 10px;
+    }
+
+    .screen {
+        overflow-y: auto;
+        width: 100%;
+        height: 100%;
+    }
+
+
+    .screen::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .screen::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, .05);
+        border-radius: 10px;
+        -webkit-box-shadow: inset 1px 1px 0 rgba(0, 0, 0, .1);
+    }
+
+    .screen:hover::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, .2);
+        border-radius: 10px;
+        -webkit-box-shadow: inset 1px 1px 0 rgba(0, 0, 0, .1);
+    }
+
+    .screen::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, .4);
+        -webkit-box-shadow: inset 1px 1px 0 rgba(0, 0, 0, .1);
+    }
+
+    .screen::-webkit-scrollbar-track {
+        border-radius: 10px;
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0);
+        background-color: #2e2e2e;
+    }
+
+    .screen::-webkit-scrollbar-track:hover {
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .4);
+        background-color: rgba(0, 0, 0, .01);
+    }
+</style>
+
+
+<body>
+    <div class="border">
+        <div class="screen">
+            <div class="border-show" id="i1">
+            </div>
+            <div class="border-show-insert" id="i2">
+            </div>
+        </div>
+    </div>
+    
+
+</body>
+<script>
+    const usr = "<span style='color:yellow;font-weight:bold;text-shadow: 0 0 10px yellow'> [user@html ~]$ </span>";
+    var input_text = "";
+    var pointer_index = 0;
+    var history_command = [];
+    var history_index = 0;
+    var commandMapping = {
+        ":blog": "https://www.zunmx.top/",
+        ":file": "http://file.zunmx.top/",
+        ":tp": "http://zunmx.top:880/",
+        ":block": "http://file.zunmx.top/block/",
+        ":ms": "https://www.zunmx.top/yuyan/",
+        ":rab": "https://www.zunmx.top/rab",
+    }
+    init();
+    window.addEventListener("keypress", function (e) {
+        if (e.code == "NumpadEnter" || e.code == "Enter") {
+            return;
+        }
+        input_text = input_text.substring(0, pointer_index) + e.key + input_text.substring(pointer_index)
+        pointer_index++;
+        document.getElementById("i2").innerHTML = flush_text();
+    })
+    window.addEventListener("keydown", function (e) {
+        if (e.code == 'Backspace') {
+            if (pointer_index > 0) {
+                input_text = input_text.substring(0, pointer_index - 1) + input_text.substring(pointer_index)
+                pointer_index--;
+            }
+            document.getElementById("i2").innerHTML = flush_text();
+        }
+        if (e.code == 'Delete') {
+            if (pointer_index < input_text.length) {
+
+                input_text = input_text.substring(0, pointer_index) + input_text.substring(pointer_index + 1)
+
+            }
+            document.getElementById("i2").innerHTML = flush_text();
+        }
+        if (e.code == "NumpadEnter" || e.code == "Enter") {
+            submit_input();
+        }
+        if (e.code == "ArrowLeft") {
+            if (pointer_index > 1)
+                pointer_index--;
+        }
+        if (e.code == "ArrowRight") {
+            if (pointer_index < input_text.length)
+                pointer_index++;
+        }
+        if (e.code == "ArrowUp") {
+            if (history_index > 0) {
+                history_index--;
+                input_text = history_command[history_index];
+                pointer_index = history_command[history_index].length;
+            }
+        }
+        if (e.code == "ArrowDown") {
+            if (history_index < history_command.length - 1) {
+                history_index++;
+                input_text = history_command[history_index];
+                pointer_index = history_command[history_index].length;
+            }
+        }
+        document.getElementById("i2").innerHTML = flush_text();
+        document.getElementById("i2").scrollIntoView();
+    })
+    function whoami() {
+        document.getElementById("i1").innerHTML += `
+<pre style='color:#12fec2;font-weight:bold;text-shadow: 0 0 10px #12fec2'>==================================================
+|                ZunMX Information               |
+|                                                |
+| Nick Name: zunmx                               |
+| Object Belong To &lt;Human@male&gt;                  |
+| Create Date: 1999****T******+08 (encrypted)    |
+| Born Address: China HeBei,QinHuangDao          |
+| Work Address: China BeiJing,****** (encrypted) |
+| Contact Way: admin@zunmx.top                   |
+| Contact Way2: karuseny@gmail.com               |
+====================EXTEND CMD====================</pre>`
+    }
+    function init() {
+        document.getElementById("i1").innerHTML += `
+<pre style='color:#12fec2;font-weight:bold;text-shadow: 0 0 10px #12fec2'>==================================================
+|               ZunMX Web Terminal               |
+|                                                |
+| :blog jump to blog website                     |
+| :file jump to file server page                 |
+| :tp jump to internet threat platform           |
+| :block jump to accessing denied IP addresses   |
+| :ms jumpt to Meet sentences                    |
+| :rab jumpt to Burn after reading               |
+| :help to show help information                 |
+| :clear to clean the screen                     |
+====================EXTEND CMD====================
+| whoami to show author information              |
+==================================================</pre>`
+        document.getElementById("i2").innerHTML += flush_text();
+    }
+    function symbolEscape(text) {
+        return text.replace(/[<>"&]/g, function (match, pos, originalText) {
+            switch (match) {
+                case "<": return "&lt;";
+                case ">": return "&gt;";
+                case "&": return "&amp;";
+                case "\"": return "&quot;";
+                case " ": return "&nbsp";
+            }
+        });
+    }
+    function clear() {
+        document.getElementById("i1").innerHTML = "";
+    }
+    function deal_command(command) {
+        if (command == ":help") {
+            init();
+        } else {
+            if (Object.keys(commandMapping).indexOf(command) > -1) {
+
+                document.getElementById("i1").innerHTML +=
+                    "<span style='color:#4be979'>[i] &nbsp;jumping " + command.substring(1) + "</span>" +
+                    "<br/>";
+                setTimeout(() => { open(commandMapping[command]) }, 150)
+            } else {
+
+                document.getElementById("i1").innerHTML +=
+                    "<span style='color:red'>[!]&nbsp;command `</span><span style='color:#a41323';font-weight:bold>"
+                    + input_text + "</span><span style='color:red'>` Service failure</span>" +
+                    "<br/>";
+            }
+        }
+    }
+    function submit_input() {
+        pointer_index = 0;
+        history_command.push(input_text);
+        document.getElementById("i1").innerHTML += flush_text() + "<br/>";
+
+        switch (input_text) {
+            case ":blog":
+            case ":file":
+            case ":tp":
+            case ":block":
+            case ":ms":
+            case ":rab":
+            case ":help": deal_command(input_text); break;
+            case "": break;
+            case ":clear": clear(); break;
+            case "whoami": whoami(); break;
+            default:
+                document.getElementById("i1").innerHTML +=
+                    "<span style='color:red;text-shadow: 0 0 10px red'>[!]&nbsp;not found `</span><span style='color:#a41323;font-weight:bold;text-shadow: 0 0 10px #a41323'>" + input_text + "</span><span style='color:red;text-shadow: 0 0 10px red'>` command</span>" +
+                    "<br/>";
+        }
+        input_text = "";
+        history_index++;
+
+
+    }
+    function flush_text() {
+        document.getElementById("i2").innerHTML = "";
+        let text_temp = usr;
+        for (let a = 0; a < input_text.length; a++) {
+            if (a == pointer_index - 1) {
+                text_temp += "<span style='color:#c1c1c1;text-decoration: underline; text-shadow: 0 0 10px #c1c1c1'>" + symbolEscape(input_text[a]) + "</span>"
+            } else {
+                text_temp += "<span style='color:#c1c1c1;text-shadow: 0 0 10px #c1c1c1'>" + symbolEscape(input_text[a]) + "</span>"
+            }
+        }
+        return text_temp;
+    }
+</script>
+
+</html>
